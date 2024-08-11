@@ -12,7 +12,7 @@ const jwtSecret = process.env.JWT_SECRET;
 
 const User = require("./models/User");
 
-app.use(express.json());    //
+app.use(express.json());
 app.use(cors({
     credentials: true,
     origin: process.env.CLIENT_URL,
@@ -24,11 +24,15 @@ app.get("/test", (req, res, ) => {
 })
 app.post("/register", async (req, res, ) => {
     const {username, password} = req.body;
-    const createdUser = await User.create({username, password});    //Async json
-    jwt.sign({userId:createdUser._id}, jwtSecret, {}, (err, token) => {    //Payload  Async token
-        if (err) throw err;
-        res.cookie("token", token).status(201).json("Ok")    //Name of token and Value of token
-    });
+    try {
+        const createdUser = await User.create({username, password});    //Async json
+        jwt.sign({userId:createdUser._id}, jwtSecret, {}, (err, token) => {    //Payload  Async token
+            if (err) throw err;
+            res.cookie("token", token).status(201).json({    //Name of token and Value of token
+                id: createdUser._id,
+            })
+        });
+    } catch(err) { if (err) throw err; }
 })
 
 
