@@ -1,30 +1,26 @@
 const express = require("express");
 const app = express();
-const mongoose =require("mongoose");
 const dotenv = require("dotenv");
-const jwt = require("jsonwebtoken");
-const User = require("./models/User");
-
 dotenv.config();
-// mongoose.connect(process.env.MONGODB_URL);    //Currently connection breaks code because the env string does not beat
-jwtSecret = process.env.JWT_SECRET;
+const mongoose =require("mongoose");
+const jwt = require("jsonwebtoken");
 
 
+mongoose.connect(process.env.MONGODB_URL);
+const jwtSecret = process.env.JWT_SECRET;
 
-//Need URL after download
-// const mongoUrl = dotenv.MONGODB_URL
+const User = require("./models/User.js");
 
-
+ 
 app.get("/test", (req, res, ) => {
     res.json("Test ok");
-    res.json({message:"message"})
 })
 app.post("/register", async (req, res, ) => {
     const {username, password} = req.body;
     const createdUser = await User.create({username, password});    //Async json
-    jwt.sign({userId:createdUser._id}, jwtSecret, (err, token) => {    //Async token
+    jwt.sign({userId:createdUser._id}, jwtSecret, (err, token) => {    //Payload  Async token
         if (err) throw err;
-        res.cookie("token", token).status(201).json("Ok")    //Name and Value
+        res.cookie("token", token).status(201).json("Ok")    //Name of token and Value of token
     });
 })
 
