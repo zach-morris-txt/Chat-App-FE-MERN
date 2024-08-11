@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const cookieParser = require("cookie-parser")
 const bcrypt = require("bcryptjs");    //Password hashing
+const webSocket = require("ws");
 
 
 
@@ -72,4 +73,9 @@ app.post("/register", async (req, res) => {
 })
 
 
-app.listen(4040);
+const server = app.listen(4040);
+
+const webSocketServer = new webSocket.WebSocketServer({server})
+webSocketServer.on("connection", (connection) => {
+    connection.send("hello")
+});
