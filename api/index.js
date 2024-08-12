@@ -76,6 +76,25 @@ app.post("/register", async (req, res) => {
 const server = app.listen(4040);
 
 const webSocketServer = new webSocket.WebSocketServer({server})
-webSocketServer.on("connection", (connection) => {
-    connection.send("hello")
+webSocketServer.on("connection", (connection, req) => {
+    const cookies = req.headers.cookie;
+    if (cookies) {
+        const tokenCookieString = cookies.split(";").find(str => str.startsWith('token='));
+        if (tokenCookieString) {
+            const token = tokenCookieString.split("=")[1];
+            if (token) {
+                jwt.verify(token, jwtSecret, {}, (err, userData) => {
+                    if (err) throw err;
+                    const {userId, username} = userData;
+                    connection.userId = userId;
+                    connection.username = username;
+                });
+            }
+        }
+    }
+    [...webSocketServer.clients].forEach(client => {
+        client.send(JSON.stringify({
+            online: [...webSocketServer.clients].map(c => ({userId:c.userId,username:c.username}))    //Building list of online clients
+        }));
+    })
 });
