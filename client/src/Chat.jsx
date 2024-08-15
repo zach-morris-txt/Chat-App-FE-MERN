@@ -42,7 +42,12 @@ export default function Chat() {
             text: newMessageText,
         }));
         setNewMessageText("");
-        setMessages(prev => ([...prev, {text: newMessageText, isOur:true}]));
+        setMessages(prev => ([...prev, {
+            text: newMessageText, 
+            sender: id,
+            recipient: selectedContact,
+            id: Date.now(),    //Timestamp message identifier
+        }]));
     }
 
     const onlinePeopleExcludeOurUser = {...onlinePeople};
@@ -75,9 +80,18 @@ export default function Chat() {
                         </div>
                     )}
                     {!!selectedContact && (
-                        <div>
+                        <div className="overflow-y-scroll">
                             {messagesWithoutDuplicates.map(message => (
-                                <div>{message.text}</div>
+                                <div className={(message.sender === id ? "text-right" : "text-left")}>
+                                    <div className={"inline-block text-left p-2 my-2 rounded-md text-sm " + 
+                                        (message.sender === id ? 
+                                        "bg-purple-500 text-white" 
+                                        : "bg-white text-grey-500")}>
+                                        sender:{message.sender}<br />
+                                        my id: {id}<br />
+                                        {message.text}
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     )}
