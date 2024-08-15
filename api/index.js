@@ -10,12 +10,13 @@ const bcrypt = require("bcryptjs");    //Password hashing
 const webSocket = require("ws");
 
 
-
 mongoose.connect(process.env.MONGODB_URL);
 const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
 
 const User = require("./models/User");
+const Message = require("./models/Message");
+
 
 app.use(express.json());
 app.use(cookieParser());
@@ -38,7 +39,6 @@ app.get("/profile", (req, res) => {
     } else {
         res.status(401).json("No token")
     }
-
 })
 app.post("/login", async (req, res) => {
     const {username, password} = req.body;
@@ -93,14 +93,24 @@ webSocketServer.on("connection", (connection, req) => {
             }
         }
     }
-    connection.on("message", (message) => {
+    connection.on("message", async (message) => {
         const messageData = JSON.parse(message.toString());
         const {recipient, text} = messageData;
 
         if (recipient && text) {
-            [...webSocketServer.clients]
+            const messageDoc = await Message.create({
+                sender:connection.UserId,
+                recipient,
+                text,
+            });
+            [...webSocketServer.clients]    //Access to MongoDB
             .filter(c => c.userId === recipient)
-            .forEach(c => c.send(JSON.stringify({text, sender:connection.userId})))
+            .forEach(c => c.send(JSON.stringify({
+                text, 
+                sender:connection.userId,
+                recipient,
+                id:messageDoc._id,
+            })))
         }
     });
 
