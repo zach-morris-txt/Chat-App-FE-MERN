@@ -77,6 +77,7 @@ const server = app.listen(4040);
 
 const webSocketServer = new webSocket.WebSocketServer({server})
 webSocketServer.on("connection", (connection, req) => {
+    //read username and id for the cookie of the connection
     const cookies = req.headers.cookie;
     if (cookies) {
         const tokenCookieString = cookies.split(";").find(str => str.startsWith('token='));
@@ -92,6 +93,18 @@ webSocketServer.on("connection", (connection, req) => {
             }
         }
     }
+    connection.on("message", (message) => {
+        const messageData = JSON.parse(message.toString());
+        const {recipient, text} = messageData;
+
+        if (recipient && text) {
+            [...webSocketServer.clients]
+            .filter(c => c.userId === recipient)
+            .forEach(c => c.send(JSON.stringify({text, sender:connection.userId})))
+        }
+    });
+
+    //Notify everyone about online people when someone connects
     [...webSocketServer.clients].forEach(client => {
         client.send(JSON.stringify({
             online: [...webSocketServer.clients].map(c => ({userId:c.userId,username:c.username}))    //Building list of online clients

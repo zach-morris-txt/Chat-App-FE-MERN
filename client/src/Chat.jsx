@@ -8,6 +8,8 @@ export default function Chat() {
     const [ws, setWs] = useState(null);
     const [onlinePeople, setOnlinePeople] = useState({});
     const [selectedContact, setSelectedContact] = useState(null);
+    const [newMessageText, setNewMessageText] = useState("");
+    const [messages, setMessages] = useState([]);
     const {username, id} = useContext(UserContext);
 
 
@@ -16,6 +18,7 @@ export default function Chat() {
         setWs(ws);
         ws.addEventListener("message", handleMessage)
     }, []);
+
     function showOnlinePeople(peopleArray) {
         const people = {};
         peopleArray.forEach(({userId, username}) => {
@@ -27,8 +30,20 @@ export default function Chat() {
         const messageData = JSON.parse(e.data);
         if ("online" in messageData) {
             showOnlinePeople(messageData.online)
+        } else {
+            setMessages(prev => ([...prev, {isOur:false, text:messageData.text}]));
         }
     }
+    function sendMessage(e) {
+        e.preventDefault();
+        ws.send(JSON.stringify({
+            recipient: selectedContact,
+            text: newMessageText,
+        }));
+        setNewMessageText("");
+        setMessages(prev => ([...prev, {text: newMessageText, isOur:true}]));
+    }
+
     const onlinePeopleExcludeOurUser = {...onlinePeople};
     delete onlinePeopleExcludeOurUser[id];
 
@@ -56,18 +71,29 @@ export default function Chat() {
                             <div className="text-gray-500">Select a contact</div>
                         </div>
                     )}
+                    {!!selectedContact && (
+                        <div>
+                            {messages.map(message => (
+                                <div >{message.text}</div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <div className="flex gap-1">
-                    <input 
-                        type="text"
-                        placeholder="Type your message" 
-                        className="bg-white flex-grow border p-2 rounded-sm" />
-                    <button className="bg-blue-800 p-2 text-white rounded-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                        </svg>
-                    </button>
-                </div>
+                {selectedContact && (
+                    <form className="flex gap-1" onSubmit={sendMessage}>
+                        <input 
+                            type="text"
+                            value={newMessageText}
+                            onChange={e => setNewMessageText(e.target.value)}
+                            placeholder="Type your message" 
+                            className="bg-white flex-grow border p-2 rounded-sm" />
+                        <button type="submit" className="bg-blue-800 p-2 text-white rounded-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                            </svg>
+                        </button>
+                    </form>
+                )}
             </div>
         </div>
     );
