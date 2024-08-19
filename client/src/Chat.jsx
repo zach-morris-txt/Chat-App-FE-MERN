@@ -73,12 +73,13 @@ export default function Chat() {
     useEffect(() => {
         if(selectedContact) {
             axios.get('/messages/'+selectedContact).then(res => {
-                setMessages(res.data);
+                const {data} = res;
+                console.log(`Data: ${data}`)
             })
         }
     }, [selectedContact]);
 
-
+    
     const onlinePeopleExcludeOurUser = {...onlinePeople};
     delete onlinePeopleExcludeOurUser[id];
     const messagesWithoutDuplicates = uniqBy(messages, "id");

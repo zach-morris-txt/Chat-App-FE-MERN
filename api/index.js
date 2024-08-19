@@ -51,9 +51,9 @@ app.get('/messages/:userId', async (req, res) => {    //Id of contact
     const messages = await Message.find({
         sender:{$in:[userId, ourUserId]},
         recipient:{$in:[userId, ourUserId]},
-    }).sort({createdAt: -1});
-    console.log({userId})
-    res.json({messages});
+    }).sort({createdAt: 1});
+    console.log({ourUserId})
+    res.json(messages);
 });
 app.get("/profile", (req, res) => {
     const token = req.cookies?.token;
@@ -123,7 +123,7 @@ webSocketServer.on("connection", (connection, req) => {
 
         if (recipient && text) {
             const messageDoc = await Message.create({
-                sender:connection.UserId,
+                sender:connection.userId,
                 recipient,
                 text,
             });
@@ -133,7 +133,7 @@ webSocketServer.on("connection", (connection, req) => {
                 text, 
                 sender:connection.userId,
                 recipient,
-                id:messageDoc._id,
+                _id:messageDoc._id,
             })))
         }
     });
