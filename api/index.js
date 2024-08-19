@@ -83,6 +83,9 @@ app.post("/login", async (req, res) => {
         }
     }
 });
+app.post("/logout", (req, res) => {
+    res.cookie("token", '', {sameSite:"none", secure:true}).json("Logged out")    //Name of token and Value of token
+});
 app.post("/register", async (req, res) => {
     const {username, password} = req.body;
     try {
@@ -111,7 +114,6 @@ webSocketServer.on("connection", (connection, req) => {
             }));
         });
     }
-
     connection.isAlive = true;
     connection.timer = setInterval(() => {
         connection.ping();
@@ -119,9 +121,8 @@ webSocketServer.on("connection", (connection, req) => {
             connection.isAlive = false;
             connection.terminate();
             notifyAboutOnlinePeople();
-            //console.log("death")
-        }, 25000);
-    }, 30000);    //Ping every 30 seconds
+        }, 1000);
+    }, 120000);    //Ping every two minutes
     connection.on("pong", () => {
         clearTimeout(connection.deathTimer);    //Refresh/recheck deathTimer
     });
