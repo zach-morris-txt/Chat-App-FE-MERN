@@ -51,8 +51,7 @@ app.get('/messages/:userId', async (req, res) => {    //Id of contact
     const messages = await Message.find({
         sender:{$in:[userId, ourUserId]},
         recipient:{$in:[userId, ourUserId]},
-    }).sort({createdAt: 1});
-    console.log({ourUserId})
+    }).sort({createdAt: 1});    //Sorted at most recent message
     res.json(messages);
 });
 app.get("/profile", (req, res) => {
