@@ -1,14 +1,16 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import Avatar from "./Avatar";
-import Logo from "./Logo";
-import { UserContext } from "./UserContext";
 import { uniqBy } from "lodash";
 import axios from "axios";
+import { UserContext } from "./UserContext";
+import Avatar from "./Avatar";
+import Logo from "./Logo";
+import Contact from "./Contact";
 
 
 export default function Chat() {
     const [ws, setWs] = useState(null);
     const [onlinePeople, setOnlinePeople] = useState({});
+    const [offlinePeople, setOfflinePeople] = useState({});
     const [selectedContact, setSelectedContact] = useState(null);
     const [newMessageText, setNewMessageText] = useState("");
     const [messages, setMessages] = useState([]);
@@ -71,10 +73,21 @@ export default function Chat() {
         }
     }, [messages]);
     useEffect(() => {
+        axios.get("/people").then(res => {
+            const offlinePeopleArray = res.data.filter(p => p._id !== id)    //Should not include our user
+                .filter(p => !Object.keys(onlinePeople).includes(p._id));    //Should not include online users
+            const offlinePeople = {};
+            offlinePeopleArray.forEach(p => {
+                offlinePeople[p._id] = p;
+            });
+            setOfflinePeople(offlinePeople);
+        });
+    }, [onlinePeople]);
+    useEffect(() => {
         if(selectedContact) {
             axios.get('/messages/'+selectedContact).then(res => {
-                setMessages(res.data)    //Message data inside
-            })
+                setMessages(res.data)
+            });
         }
     }, [selectedContact]);
 
@@ -89,17 +102,21 @@ export default function Chat() {
             <div className="bg-blue-100 w-1/3 p-2 flex flex-col">
                     <Logo />
                     {Object.keys(onlinePeopleExcludeOurUser).map(userId => (
-                        <div key={userId} onClick={() => setSelectedContact(userId)} 
-                        className={"border-b border-gray-100 flex items-center gap-2 cursor-pointer "+(userId === selectedContact ? "bg-blue-800" : "")}>
-                            {userId === selectedContact && (
-                                <div className="h-12 w-1 bg-blue-500 rounded-r-md items-center"></div>
-                            )}
-                            <div className="flex gap-2 py-2 pl-4">
-                                <Avatar username={onlinePeople[userId]} userId={userId} />
-                                <span className="text-gray-900">{onlinePeople[userId]}</span>
-                            </div>
-                        </div>
-                    ))} 
+                        <Contact id={userId} 
+                            key={userId}
+                            username={onlinePeopleExcludeOurUser[userId]} 
+                            onClick={() => {setSelectedContact(userId)}} 
+                            selected = {userId === selectedContact} 
+                            online={true} />
+                    ))}
+                    {Object.keys(offlinePeople).map(userId => (
+                        <Contact id={userId} 
+                            key={userId}
+                            username={offlinePeople[userId].username} 
+                            onClick={() => {setSelectedContact(userId)}} 
+                            selected = {userId === selectedContact} 
+                            online={false} />
+                    ))}
                 </div>
                 <div className="flex flex-col bg-blue-300 w-2/3 p-2">
                     <div className="flex-grow">

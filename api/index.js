@@ -54,6 +54,10 @@ app.get('/messages/:userId', async (req, res) => {    //Id of contact
     }).sort({createdAt: 1});    //Sorted at most recent message
     res.json(messages);
 });
+app.get("/people", async (req, res) => {
+    const users = await User.find({}, {"_id":1, username:1});    //First empty object signifies no conditions
+    res.json(users);
+});
 app.get("/profile", (req, res) => {
     const token = req.cookies?.token;
     if (token) {
