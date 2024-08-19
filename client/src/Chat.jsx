@@ -1,8 +1,9 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import Avatar from "./Avatar";
 import Logo from "./Logo";
 import { UserContext } from "./UserContext";
 import { uniqBy } from "lodash";
+import axios from "axios";
 
 
 export default function Chat() {
@@ -12,14 +13,24 @@ export default function Chat() {
     const [newMessageText, setNewMessageText] = useState("");
     const [messages, setMessages] = useState([]);
     const {username, id} = useContext(UserContext);
+    const underMessagesRef = useRef();    //Handles scroll bar scroll down on new message
 
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:4040");
-        setWs(ws);
-        ws.addEventListener("message", handleMessage)
+        connectToWS();
     }, []);
 
+    function connectToWS() {
+        const ws = new WebSocket("ws://localhost:4040");
+        setWs(ws);
+        ws.addEventListener("message", handleMessage);
+        ws.addEventListener("close", () => {
+            setTimeout(() => {
+                console.log("Disconnected. Trying to reconnect");
+                connectToWS();
+            }, 1000)
+        })
+    }
     function showOnlinePeople(peopleArray) {
         const people = {};
         peopleArray.forEach(({userId, username}) => {
@@ -32,7 +43,9 @@ export default function Chat() {
         if ("online" in messageData) {
             showOnlinePeople(messageData.online)
         } else if ("text" in messageData) {
-            setMessages(prev => ([...prev, {...messageData}]));
+            if (messageData.sender === selectedContact) {
+                setMessages(prev => ([...prev, {...messageData}]));
+            }
         }
     }
     function sendMessage(e) {
@@ -50,10 +63,26 @@ export default function Chat() {
         }]));
     }
 
+
+    useEffect(() => {
+        const divMessages = underMessagesRef.current;
+        if(divMessages) {
+            divMessages.scrollIntoView({behavior:"smooth"});
+        }
+    }, [messages]);
+    useEffect(() => {
+        if(selectedContact) {
+            axios.get('/messages/'+selectedContact).then(res => {
+                setMessages(res.data);
+            })
+        }
+    }, [selectedContact]);
+
+
     const onlinePeopleExcludeOurUser = {...onlinePeople};
     delete onlinePeopleExcludeOurUser[id];
-
     const messagesWithoutDuplicates = uniqBy(messages, "id");
+
 
     return (
         <div className="flex h-screen">
@@ -80,19 +109,22 @@ export default function Chat() {
                         </div>
                     )}
                     {!!selectedContact && (
-                        <div className="overflow-y-scroll">
-                            {messagesWithoutDuplicates.map(message => (
-                                <div className={(message.sender === id ? "text-right" : "text-left")}>
-                                    <div className={"inline-block text-left p-2 my-2 rounded-md text-sm " + 
-                                        (message.sender === id ? 
-                                        "bg-purple-500 text-white" 
-                                        : "bg-white text-grey-500")}>
-                                        sender:{message.sender}<br />
-                                        my id: {id}<br />
-                                        {message.text}
+                        <div className="relative h-full ">
+                            <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
+                                {messagesWithoutDuplicates.map(message => (
+                                    <div className={(message.sender === id ? "text-right" : "text-left")}>
+                                        <div className={"inline-block text-left p-2 my-2 rounded-md text-sm " + 
+                                            (message.sender === id ? 
+                                            "bg-purple-500 text-white" 
+                                            : "bg-white text-grey-500")}>
+                                            sender:{message.sender}<br />
+                                            my id: {id}<br />
+                                            {message.text}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                                <div ref={underMessagesRef}></div>
+                            </div>
                         </div>
                     )}
                 </div>

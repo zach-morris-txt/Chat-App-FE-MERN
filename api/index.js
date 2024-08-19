@@ -26,9 +26,35 @@ app.use(cors({
 }));
 
  
+async function getUserDataFromReq (req) {
+    return new Promise((resolve, reject) => {    //Required to handle callback inside async
+        const token = req.cookies?.token;
+        if (token) {
+            jwt.verify(token, jwtSecret, {}, (err, userData) => {
+                if (err) throw err;
+                resolve(userData);
+            });
+        } else {
+            reject("No token")
+        }
+    });
+}
+
+
 app.get("/test", (req, res) => {
     res.json("Test ok");
-})
+});
+app.get('/messages/:userId', async (req, res) => {    //Id of contact
+    const {userId} = req.params;
+    const userData = await getUserDataFromReq(req); //POSS const userData = await getUserDataFromReq(req)
+    const ourUserId = userData.userId;
+    const messages = await Message.find({
+        sender:{$in:[userId, ourUserId]},
+        recipient:{$in:[userId, ourUserId]},
+    }).sort({createdAt: -1});
+    console.log({userId})
+    res.json({messages});
+});
 app.get("/profile", (req, res) => {
     const token = req.cookies?.token;
     if (token) {
@@ -39,7 +65,7 @@ app.get("/profile", (req, res) => {
     } else {
         res.status(401).json("No token")
     }
-})
+});
 app.post("/login", async (req, res) => {
     const {username, password} = req.body;
     const foundUser = await User.findOne({username});
@@ -47,14 +73,13 @@ app.post("/login", async (req, res) => {
         const passOk = bcrypt.compareSync(password, foundUser.password);
         if (passOk) {
             jwt.sign({userId:foundUser._id,username}, jwtSecret, {}, (err, token) => {    //Payload  Async token
-                if (err) throw err;
                 res.cookie("token", token, {sameSite:"none", secure:true}).json({    //Name of token and Value of token
                     id: foundUser._id,
                 })
             });
         }
     }
-})
+});
 app.post("/register", async (req, res) => {
     const {username, password} = req.body;
     try {
@@ -70,11 +95,10 @@ app.post("/register", async (req, res) => {
             })
         });
     } catch(err) { if (err) throw err; }
-})
+});
 
 
 const server = app.listen(4040);
-
 const webSocketServer = new webSocket.WebSocketServer({server})
 webSocketServer.on("connection", (connection, req) => {
     //read username and id for the cookie of the connection
@@ -95,7 +119,7 @@ webSocketServer.on("connection", (connection, req) => {
     }
     connection.on("message", async (message) => {
         const messageData = JSON.parse(message.toString());
-        const {recipient, text} = messageData;
+        const {recipient, text} = messageData
 
         if (recipient && text) {
             const messageDoc = await Message.create({
