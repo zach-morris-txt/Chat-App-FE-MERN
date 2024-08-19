@@ -104,8 +104,29 @@ app.post("/register", async (req, res) => {
 const server = app.listen(4040);
 const webSocketServer = new webSocket.WebSocketServer({server})
 webSocketServer.on("connection", (connection, req) => {
-    //read username and id for the cookie of the connection
-    const cookies = req.headers.cookie;
+    function notifyAboutOnlinePeople() {
+        [...webSocketServer.clients].forEach(client => {    //Notify everyone about online people when someone connects:
+            client.send(JSON.stringify({
+                online: [...webSocketServer.clients].map(c => ({userId:c.userId,username:c.username}))    //Building list of online clients
+            }));
+        });
+    }
+
+    connection.isAlive = true;
+    connection.timer = setInterval(() => {
+        connection.ping();
+        connection.deathTimer = setTimeout(() => {    //If 1 second without ping, set isAlive to false
+            connection.isAlive = false;
+            connection.terminate();
+            notifyAboutOnlinePeople();
+            //console.log("death")
+        }, 25000);
+    }, 30000);    //Ping every 30 seconds
+    connection.on("pong", () => {
+        clearTimeout(connection.deathTimer);    //Refresh/recheck deathTimer
+    });
+
+    const cookies = req.headers.cookie;    //read username and id for the cookie of the connection:
     if (cookies) {
         const tokenCookieString = cookies.split(";").find(str => str.startsWith('token='));
         if (tokenCookieString) {
@@ -140,11 +161,5 @@ webSocketServer.on("connection", (connection, req) => {
             })))
         }
     });
-
-    //Notify everyone about online people when someone connects
-    [...webSocketServer.clients].forEach(client => {
-        client.send(JSON.stringify({
-            online: [...webSocketServer.clients].map(c => ({userId:c.userId,username:c.username}))    //Building list of online clients
-        }));
-    })
+    notifyAboutOnlinePeople()
 });
