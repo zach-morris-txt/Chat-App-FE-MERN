@@ -20,7 +20,7 @@ export default function Chat() {
 
     useEffect(() => {
         connectToWS();
-    }, []);
+    }, [selectedContact]);
 
     function connectToWS() {
         const ws = new WebSocket("ws://localhost:4040");
@@ -105,7 +105,7 @@ export default function Chat() {
 
     return (
         <div className="flex h-screen">
-            <div className="bg-blue-100 w-1/3 p-2 flex flex-col">
+            <div className="bg-blue-100 w-1/4 p-2 flex flex-col">
                 <div className="flex-grow overflow-y-scroll">
                     <Logo />
                     {Object.keys(onlinePeopleExcludeOurUser).map(userId => (
@@ -129,7 +129,7 @@ export default function Chat() {
                     <button onClick={logout} className="bg-white text-gray-600 py-1 px-8 border border-black rounded-md">Logout</button>
                 </div>
             </div>
-            <div className="flex flex-col bg-blue-300 w-2/3 p-2">
+            <div className="flex flex-col bg-blue-300 w-3/4 p-2">
                 <div className="flex-grow">
                     {!selectedContact && (
                         <div className="flex flex-grow items-center justify-center h-full">
@@ -141,7 +141,7 @@ export default function Chat() {
                             <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
                                 {messagesWithoutDuplicates.map(message => (
                                     <div key={message._id} className={(message.sender === id ? "text-right" : "text-left")}>
-                                        <div className={"inline-block fit-content w-fit max-w-2xl text-left break-all p-2 my-2 rounded-md text-sm " + 
+                                        <div className={"inline-block fit-content w-fit max-w-3xl text-left break-all p-2 my-2 rounded-md text-sm " + 
                                         (message.sender === id ? "bg-purple-500 text-white" : "bg-white text-grey-500")}>
                                             {message.text}
                                         </div>
