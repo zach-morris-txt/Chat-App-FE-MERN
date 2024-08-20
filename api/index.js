@@ -119,6 +119,7 @@ webSocketServer.on("connection", (connection, req) => {
         connection.ping();
         connection.deathTimer = setTimeout(() => {    //If 1 second without ping, set isAlive to false
             connection.isAlive = false;
+            clearInterval(connection.timer);    //Stop endless timer loop
             connection.terminate();
             notifyAboutOnlinePeople();
         }, 1000);
