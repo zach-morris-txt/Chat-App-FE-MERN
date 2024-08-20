@@ -105,9 +105,9 @@ export default function Chat() {
 
     return (
         <div className="flex h-screen">
-            <div className="bg-blue-100 w-1/4 p-2 flex flex-col">
-                <div className="flex-grow overflow-y-scroll">
-                    <Logo />
+            <div className="w-1/4 flex flex-col">
+                <Logo />
+                <div className="flex-grow overflow-y-scroll pl-2">
                     {Object.keys(onlinePeopleExcludeOurUser).map(userId => (
                         <Contact id={userId} 
                             key={userId}
@@ -125,11 +125,17 @@ export default function Chat() {
                             online={false} />
                     ))}
                 </div>
-                <div className="flex items-center justify-end text-center p-2">
+                <div className="flex items-center justify-between text-center p-2 bg-black">
+                    <div className="text-white font-bold flex mb-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-10">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                        <span className="italic">{username}</span>
+                    </div>
                     <button onClick={logout} className="bg-white text-gray-600 py-1 px-8 border border-black rounded-md">Logout</button>
                 </div>
             </div>
-            <div className="flex flex-col bg-blue-300 w-3/4 p-2">
+            <div className="flex flex-col bg-blue-300 w-3/4 p-">
                 <div className="flex-grow">
                     {!selectedContact && (
                         <div className="flex flex-grow items-center justify-center h-full">
@@ -141,7 +147,7 @@ export default function Chat() {
                             <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
                                 {messagesWithoutDuplicates.map(message => (
                                     <div key={message._id} className={(message.sender === id ? "text-right" : "text-left")}>
-                                        <div className={"inline-block fit-content w-fit max-w-3xl text-left break-all p-2 my-2 rounded-md text-sm " + 
+                                        <div className={"inline-block fit-content w-fit max-w-3xl text-left break-all p-2 my-1 mx-4 rounded-md text-sm " + 
                                         (message.sender === id ? "bg-purple-500 text-white" : "bg-white text-grey-500")}>
                                             {message.text}
                                         </div>
@@ -153,7 +159,7 @@ export default function Chat() {
                     )}
                 </div>
                 {selectedContact && (
-                    <form className="flex gap-1" onSubmit={sendMessage}>
+                    <form className="flex gap-1 mx-3 mb-1" onSubmit={sendMessage}>
                         <input 
                             type="text"
                             value={newMessageText}

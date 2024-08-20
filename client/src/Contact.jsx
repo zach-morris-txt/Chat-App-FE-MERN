@@ -4,7 +4,7 @@ import Avatar from "./Avatar";
 export default function Contact({id, username, onClick, selected, online}) {
     return (
         <div key={id} onClick={() => onClick(id)} 
-        className={"border-b border-gray-100 flex items-center gap-2 cursor-pointer "+(selected ? "bg-blue-800" : "")}>
+        className={"border-b border-gray-100 flex items-center gap-2 cursor-pointer "+(selected ? "bg-cyan-500 border-t-4" : "bg-blue-200")}>
             {selected && (
                 <div className="h-12 w-1 bg-blue-500 rounded-r-md items-center"></div>
             )}
