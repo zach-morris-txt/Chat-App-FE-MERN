@@ -8,6 +8,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser")
 const bcrypt = require("bcryptjs");    //Password hashing
 const webSocket = require("ws");
+const fs = require("fs");
 
 
 mongoose.connect(process.env.MONGODB_URL);
@@ -16,8 +17,9 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 
 const User = require("./models/User");
 const Message = require("./models/Message");
+const { pathToFileURL } = require("url");
 
-
+app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
@@ -145,20 +147,32 @@ webSocketServer.on("connection", (connection, req) => {
     }
     connection.on("message", async (message) => {
         const messageData = JSON.parse(message.toString());
-        const {recipient, text} = messageData
+        const {recipient, text, file} = messageData;
+        let fileName = null;
 
-        if (recipient && text) {
+        if (file) {
+            fileName = Date.now() + file.name;
+            const path = __dirname + "/uploads/" + fileName;
+            const bufferData = Buffer.from(file.data.split(',')[1], "base64");    //Split Base64 string label from encoding
+            fs.writeFile(path, bufferData, () => {
+                console.log(path)
+            });
+        }
+        if (recipient && (text || file)) {
             const messageDoc = await Message.create({
                 sender:connection.userId,
                 recipient,
                 text,
+                file: file ? fileName : null, 
             });
+            console.log("Created message");
             [...webSocketServer.clients]    //Access to MongoDB
             .filter(c => c.userId === recipient)
             .forEach(c => c.send(JSON.stringify({
                 text, 
                 sender:connection.userId,
                 recipient,
+                file: file ? fileName : null,
                 _id:messageDoc._id,
             })))
         }
